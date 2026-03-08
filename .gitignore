@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+
+# Local env files
+.env
+
+# Web-related
+node_modules/
+dist/
+.expo/
+web-build/
+.vscode/
+.kotlin/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.metro-health-check*
+
+# macOS
+.DS_Store
+*.pem
