@@ -1,7 +1,9 @@
 {
-  "dependencies": {
-    "expo": "^54.0.33",
-    "react": "19.1.0",
-    "react-native": "0.81.5"
+  "name": "dengue-project",
+  "version": "1.0.0",
+  "scripts": {
+    "start backend": "cd backend && ..\\.venv\\Scripts\\python.exe app.py",
+    "start frontend": "cd frontend && npm start",
+    "dev": "npm run \"start backend\" & npm run \"start frontend\""
   }
 }
