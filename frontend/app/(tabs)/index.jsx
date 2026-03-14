@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     StyleSheet,
     Text,
     View,
     ScrollView,
     TouchableOpacity,
-    Dimensions
+    Dimensions,
+    ActivityIndicator
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as SecureStore from 'expo-secure-store';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Card } from '@/components/ui/Card';
@@ -19,6 +22,48 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
+    const router = useRouter();
+    
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                const userInfoStr = await SecureStore.getItemAsync('userInfo');
+                const token = await SecureStore.getItemAsync('userToken');
+                
+                if (!token) {
+                    router.replace('/(auth)/login');
+                    return;
+                }
+
+                if (userInfoStr) {
+                    setUser(JSON.parse(userInfoStr));
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, []);
+
+    const handleLogout = async () => {
+        await SecureStore.deleteItemAsync('userToken');
+        await SecureStore.deleteItemAsync('userInfo');
+        router.replace('/(auth)/login');
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { backgroundColor: themeColors.background, justifyContent: 'center' }]}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
+            </View>
+        );
+    }
 
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -27,10 +72,13 @@ export default function DashboardScreen() {
             {/* Custom Header */}
             <View style={styles.header}>
                 <View>
-                    <Text style={[styles.greeting, { color: themeColors.icon }]}>Hello, User</Text>
+                    <Text style={[styles.greeting, { color: themeColors.icon }]}>Hello, {user?.name || 'User'}</Text>
                     <Text style={[styles.title, { color: themeColors.text }]}>Stay Safe Today</Text>
                 </View>
-                <TouchableOpacity style={[styles.profileButton, { backgroundColor: themeColors.surface }]}>
+                <TouchableOpacity 
+                    onPress={() => router.push('/(tabs)/profile')}
+                    style={[styles.profileButton, { backgroundColor: themeColors.surface }]}
+                >
                     <IconSymbol name="person.fill" size={24} color={themeColors.primary} />
                 </TouchableOpacity>
             </View>
