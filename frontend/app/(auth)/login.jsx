@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -19,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
+import { authStyles as styles } from '@/styles/authStyles';
 
 export default function LoginScreen() {
     const colorScheme = useColorScheme() ?? 'light';
@@ -91,7 +91,7 @@ export default function LoginScreen() {
                 <View style={styles.header}>
                     <View style={styles.imageContainer}>
                         <Image
-                            source={require('@/assets/logo.png')}
+                            source={require('@/assets/logo2.png')}
                             style={styles.logo}
                             resizeMode="contain"
                         />
@@ -170,84 +170,5 @@ export default function LoginScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        paddingHorizontal: 24,
-        paddingTop: 60,
-        paddingBottom: 40,
-    },
-    header: {
-        alignItems: 'center',
-        marginBottom: 40,
-    },
-    imageContainer: {
-        width: 220,
-        height: 180,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 32,
-        overflow: 'hidden',
-    },
-    logo: {
-        width: 200,
-        height: 160,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: '800',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
-        lineHeight: 22,
-        paddingHorizontal: 20,
-    },
-    form: {
-        width: '100%',
-    },
-    forgotPassword: {
-        alignSelf: 'flex-end',
-        marginBottom: 24,
-    },
-    loginButton: {
-        marginBottom: 32,
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 32,
-    },
-    divider: {
-        flex: 1,
-        height: 1,
-    },
-    dividerText: {
-        marginHorizontal: 16,
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    socialContainer: {
-        gap: 16,
-        marginBottom: 40,
-    },
-    socialButton: {
-        height: 50,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    footerText: {
-        fontSize: 15,
-    },
-    footerLink: {
-        fontSize: 15,
-        fontWeight: '700',
-    },
-});
+// Internal styles removed, now using external authStyles
+

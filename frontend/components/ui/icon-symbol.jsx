@@ -9,10 +9,12 @@ const MAPPING = {
     'house.fill': 'home',
     'paperplane.fill': 'send',
     // Auth & General
-    'chevron.left': 'chevron-left',
-    'chevron.right': 'chevron-right',
+    'chevron.left': 'keyboard-arrow-left',
+    'chevron.right': 'keyboard-arrow-right',
     'chevron.left.forwardslash.chevron.right': 'code',
     'person.fill': 'person',
+    'shield.fill': 'security',
+    'rectangle.portrait.and.arrow.right': 'logout',
     'g.circle.fill': 'email',
     'f.circle.fill': 'people',
     // Dashboard

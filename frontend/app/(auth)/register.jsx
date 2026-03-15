@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
+import { authStyles as styles } from '@/styles/authStyles';
 
 export default function RegisterScreen() {
     const colorScheme = useColorScheme() ?? 'light';
@@ -167,60 +167,5 @@ export default function RegisterScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        paddingHorizontal: 24,
-        paddingTop: 60,
-        paddingBottom: 40,
-    },
-    header: {
-        marginBottom: 40,
-    },
-    backButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: '800',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        lineHeight: 22,
-    },
-    form: {
-        width: '100%',
-    },
-    termsContainer: {
-        marginBottom: 32,
-        paddingRight: 20,
-    },
-    termsText: {
-        fontSize: 13,
-        lineHeight: 18,
-    },
-    registerButton: {
-        marginBottom: 32,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    footerText: {
-        fontSize: 15,
-    },
-    footerLink: {
-        fontSize: 15,
-        fontWeight: '700',
-    },
-});
+// Internal styles removed, now using external authStyles
+
