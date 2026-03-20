@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -9,6 +9,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 import joblib
 import pandas as pd
 from pymongo import MongoClient
+import certifi
 
 app = Flask(__name__)
 # Enable CORS for the frontend (assumed to be running on another port)
@@ -33,7 +34,9 @@ jwt = JWTManager(app)
 
 # --- MongoDB Connection ---
 try:
-    client = MongoClient(MONGODB_URI)
+    # Use certifi for SSL/TLS verification to avoid handshake errors on Windows
+    ca = certifi.where()
+    client = MongoClient(MONGODB_URI, tlsCAFile=ca)
     # You can change the database name here if needed
     db = client.get_database("Dengue_prediction_db")
     prediction_logs = db.prediction_logs
@@ -42,7 +45,7 @@ try:
     # "Prime" the database with a startup event so it shows in the UI
     db.system_events.insert_one({
         "event": "backend_started",
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.now(timezone.utc)
     })
     
     print("Connected to MongoDB and primed database")
@@ -95,7 +98,7 @@ def register():
             'name': name,
             'email': email,
             'password': hashed_password,
-            'created_at': datetime.utcnow(),
+            'created_at': datetime.now(timezone.utc),
             'is_new_user': True  # Flag for onboarding
         }
         
@@ -222,7 +225,7 @@ def predict_risk():
             "humidity": data.get('Humidity_avg'),
             "predicted_cases": predicted_cases,
             "risk_level": risk_level,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         
         prediction_logs.insert_one(log_entry)

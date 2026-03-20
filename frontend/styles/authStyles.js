@@ -10,6 +10,28 @@ export const authStyles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 40,
     },
+    slLogo: {
+        position: 'absolute',
+        top: 50,
+        right: 24,
+        width: 60,
+        height: 60,
+        zIndex: 10,
+    },
+    slLion: {
+        position: 'absolute',
+        top: 50,
+        left: 24,
+        width: 60,
+        height: 60,
+        zIndex: 10,
+    },
+    slFlag: {
+        width: 200,
+        height: 120,
+        marginBottom: 1,
+        borderRadius: 2,
+    },
     header: {
         alignItems: 'center',
         marginBottom: 40,

@@ -87,6 +87,7 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={[styles.container, { backgroundColor: themeColors.background }]}
         >
+            
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
                     <View style={styles.imageContainer}>
@@ -97,6 +98,11 @@ export default function LoginScreen() {
                         />
                     </View>
                     <Text style={[styles.title, { color: themeColors.text }]}>Welcome Back</Text>
+                    <Image
+                        source={require('@/assets/SLflag.png')}
+                        style={styles.slFlag}
+                        resizeMode="contain"
+                    />
                     <Text style={[styles.subtitle, { color: themeColors.icon }]}>
                         Log in to monitor and predict dengue risks in your area.
                     </Text>

@@ -21,6 +21,16 @@ export default function OnboardingScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+            <Image
+                source={require('@/assets/SLlion.png')}
+                style={styles.slLion}
+                resizeMode="contain"
+            />
+            <Image
+                source={require('@/assets/SLlogo.png')}
+                style={styles.slLogo}
+                resizeMode="contain"
+            />
             <View style={styles.imageSection}>
                 <LinearGradient
                     colors={['#FFFFFF', '#F0F2F5']}
@@ -62,6 +72,22 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    slLogo: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        width: 60,
+        height: 60,
+        zIndex: 10,
+    },
+    slLion: {
+        position: 'absolute',
+        top: 50,
+        left: 20,
+        width: 60,
+        height: 60,
+        zIndex: 10,
     },
     imageSection: {
         height: height * 0.55,
