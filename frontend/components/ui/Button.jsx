@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+    View,
     TouchableOpacity,
     Text,
     StyleSheet,
@@ -41,17 +42,20 @@ export function Button({
 
     const getTextColor = () => {
         if (variant === 'outline' || variant === 'ghost') return themeColors.primary;
-        return '#FFFFFF';
+        // High contrast logic for black/white buttons
+        if (variant === 'secondary') return themeColors.text;
+        return colorScheme === 'light' ? '#FFFFFF' : '#000000';
     };
 
     return (
         <TouchableOpacity
             onPress={onPress}
             disabled={disabled || loading}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             style={[
                 styles.button,
                 getButtonStyle(),
+                variant === 'outline' && { borderColor: themeColors.border },
                 (disabled || loading) && styles.disabled,
                 style
             ]}
@@ -60,11 +64,10 @@ export function Button({
                 <ActivityIndicator color={getTextColor()} />
             ) : (
                 <>
-                    {icon}
+                    {icon && <View style={styles.iconContainer}>{icon}</View>}
                     <Text style={[
                         styles.text,
                         { color: getTextColor() },
-                        icon ? { marginLeft: 8 } : {},
                         textStyle
                     ]}>
                         {title}
@@ -77,18 +80,20 @@ export function Button({
 
 const styles = StyleSheet.create({
     button: {
-        height: 56,
-        borderRadius: 16,
+        height: 54,
+        borderRadius: 12,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 24,
+        borderWidth: 1,
+        borderColor: 'transparent',
         ...Platform.select({
             ios: {
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
             },
             android: {
                 elevation: 4,
@@ -97,10 +102,13 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.5,
+        fontWeight: '600',
+        letterSpacing: -0.2, // Tighter tracking for premium look
+    },
+    iconContainer: {
+        marginRight: 10,
     },
     disabled: {
-        opacity: 0.5,
+        opacity: 0.4,
     },
 });

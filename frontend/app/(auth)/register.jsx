@@ -151,8 +151,8 @@ export default function RegisterScreen() {
                         title={loading ? t('creating_account') : t('create_account')}
                         onPress={handleRegister}
                         disabled={loading}
+                        loading={loading}
                         style={styles.registerButton}
-                        icon={loading ? <ActivityIndicator color="#fff" size="small" /> : null}
                     />
 
 

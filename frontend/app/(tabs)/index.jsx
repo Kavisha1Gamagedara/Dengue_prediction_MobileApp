@@ -126,25 +126,25 @@ export default function DashboardScreen() {
                         <ActionItem
                             icon="doc.text.fill"
                             title={t('report_case')}
-                            color="#4A90E2"
+                            color={colorScheme === 'light' ? '#000000' : '#FFFFFF'}
                             themeColors={themeColors}
                         />
                         <ActionItem
                             icon="chart.bar.fill"
                             title={t('prediction')}
-                            color={themeColors.primary}
+                            color={colorScheme === 'light' ? '#000000' : '#FFFFFF'}
                             themeColors={themeColors}
                         />
                         <ActionItem
                             icon="hand.raised.fill"
                             title={t('prevention')}
-                            color="#2ECC71"
+                            color={colorScheme === 'light' ? '#000000' : '#FFFFFF'}
                             themeColors={themeColors}
                         />
                         <ActionItem
                             icon="bell.fill"
                             title={t('alerts')}
-                            color="#F1C40F"
+                            color={colorScheme === 'light' ? '#000000' : '#FFFFFF'}
                             themeColors={themeColors}
                         />
                     </View>

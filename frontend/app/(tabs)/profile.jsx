@@ -161,20 +161,32 @@ export default function ProfileScreen() {
                         <TouchableOpacity 
                             style={[
                                 styles.languageButton, 
-                                { backgroundColor: lang === 'en' ? themeColors.primary : themeColors.surface, borderColor: themeColors.border }
+                                { 
+                                    backgroundColor: lang === 'en' ? themeColors.primary : themeColors.surface, 
+                                    borderColor: themeColors.border 
+                                }
                             ]}
                             onPress={() => changeLanguage('en')}
                         >
-                            <Text style={[styles.languageButtonText, { color: lang === 'en' ? '#FFF' : themeColors.text }]}>English</Text>
+                            <Text style={[
+                                styles.languageButtonText, 
+                                { color: lang === 'en' ? (colorScheme === 'light' ? '#FFF' : '#000') : themeColors.text }
+                            ]}>English</Text>
                         </TouchableOpacity>
                         <TouchableOpacity 
                             style={[
                                 styles.languageButton, 
-                                { backgroundColor: lang === 'si' ? themeColors.primary : themeColors.surface, borderColor: themeColors.border }
+                                { 
+                                    backgroundColor: lang === 'si' ? themeColors.primary : themeColors.surface, 
+                                    borderColor: themeColors.border 
+                                }
                             ]}
                             onPress={() => changeLanguage('si')}
                         >
-                            <Text style={[styles.languageButtonText, { color: lang === 'si' ? '#FFF' : themeColors.text }]}>සිංහල</Text>
+                            <Text style={[
+                                styles.languageButtonText, 
+                                { color: lang === 'si' ? (colorScheme === 'light' ? '#FFF' : '#000') : themeColors.text }
+                            ]}>සිංහල</Text>
                         </TouchableOpacity>
                     </View>
 

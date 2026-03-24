@@ -2,30 +2,30 @@ import { Platform } from 'react-native';
 
 export const Colors = {
     light: {
-        text: '#2D3436', // 30%
-        background: '#FFFFFF', // 60%
-        primary: '#FFB347', // 10% (Buttons/Accent)
-        secondary: '#7E1C25', // Deep Red (Legacy Primary)
-        accent: '#FFB347',
-        surface: '#FDFDFD',
-        border: '#EAEEF2',
-        tint: '#FFB347',
-        icon: '#7F8C8D',
-        tabIconDefault: '#BDC3C7',
-        tabIconSelected: '#FFB347',
+        text: '#1A1A1A', // Darker text
+        background: '#FFFFFF',
+        primary: '#1A1A1A', // Black buttons in light mode
+        secondary: '#F5F5F7', // Light grey for secondary buttons
+        accent: '#000000',
+        surface: '#FFFFFF',
+        border: '#E5E5E7', // Apple-style light border
+        tint: '#1A1A1A',
+        icon: '#86868B',
+        tabIconDefault: '#C1C1C6',
+        tabIconSelected: '#000000',
     },
     dark: {
-        text: '#F8F9FA', // 30%
-        background: '#121212', // 60%
-        primary: '#FFB347', // 10% (Buttons/Accent)
-        secondary: '#8A232E',
-        accent: '#FFB347',
-        surface: '#1E1E1E',
+        text: '#F5F5F7', // Off-white text
+        background: '#000000', // Pure black
+        primary: '#FFFFFF', // White buttons in dark mode
+        secondary: '#1C1C1E', // Dark grey for secondary buttons
+        accent: '#FFFFFF',
+        surface: '#121212',
         border: '#333333',
-        tint: '#FFB347',
-        icon: '#9BA1A6',
-        tabIconDefault: '#9BA1A6',
-        tabIconSelected: '#FFB347',
+        tint: '#FFFFFF',
+        icon: '#86868B',
+        tabIconDefault: '#48484A',
+        tabIconSelected: '#FFFFFF',
     },
 };
 

@@ -148,8 +148,8 @@ export default function LoginScreen() {
                         title={loading ? t('connecting') : t('connect')}
                         onPress={handleLogin}
                         disabled={loading}
+                        loading={loading}
                         style={styles.loginButton}
-                        icon={loading ? <ActivityIndicator color="#fff" size="small" /> : null}
                     />
 
                     <View style={styles.dividerContainer}>
