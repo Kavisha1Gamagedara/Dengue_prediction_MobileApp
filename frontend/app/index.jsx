@@ -37,6 +37,11 @@ export default function OnboardingScreen() {
                     style={styles.gradient}
                 />
                 <Image
+                    source={require('@/assets/Dengue_clean.png')}
+                    style={styles.backgroundImage}
+                    resizeMode="cover"
+                />
+                <Image
                     source={require('@/assets/logo.png')}
                     style={styles.logo}
                     resizeMode="contain"
@@ -101,6 +106,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: '100%',
         height: '100%',
+    },
+    backgroundImage: {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        opacity: 0.2, // Subtle background to keep the main logo prominent
     },
     logo: {
         width: width * 0.8,

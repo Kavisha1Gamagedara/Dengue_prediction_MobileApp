@@ -19,11 +19,15 @@ import { Input } from '@/components/ui/Input';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
 import { authStyles as styles } from '@/styles/authStyles';
+import { useTranslation } from '@/hooks/LanguageContext';
+
 
 export default function LoginScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
     const router = useRouter();
+    const { t, lang, changeLanguage } = useTranslation();
+
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -87,8 +91,18 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={[styles.container, { backgroundColor: themeColors.background }]}
         >
+            <View style={loginPageStyles.langSelector}>
+                <TouchableOpacity onPress={() => changeLanguage('en')} style={[loginPageStyles.langBtn, lang === 'en' && loginPageStyles.activeLang]}>
+                    <Text style={[loginPageStyles.langText, { color: lang === 'en' ? themeColors.primary : themeColors.icon }]}>EN</Text>
+                </TouchableOpacity>
+                <View style={[loginPageStyles.divider, { backgroundColor: themeColors.border }]} />
+                <TouchableOpacity onPress={() => changeLanguage('si')} style={[loginPageStyles.langBtn, lang === 'si' && loginPageStyles.activeLang]}>
+                    <Text style={[loginPageStyles.langText, { color: lang === 'si' ? themeColors.primary : themeColors.icon }]}>සිංහල</Text>
+                </TouchableOpacity>
+            </View>
             
             <ScrollView contentContainerStyle={styles.scrollContent}>
+
                 <View style={styles.header}>
                     <View style={styles.imageContainer}>
                         <Image
@@ -97,20 +111,21 @@ export default function LoginScreen() {
                             resizeMode="contain"
                         />
                     </View>
-                    <Text style={[styles.title, { color: themeColors.text }]}>Welcome Back</Text>
+                    <Text style={[styles.title, { color: themeColors.text }]}>{t('welcome_back')}</Text>
                     <Image
                         source={require('@/assets/SLflag.png')}
                         style={styles.slFlag}
                         resizeMode="contain"
                     />
                     <Text style={[styles.subtitle, { color: themeColors.icon }]}>
-                        Log in to monitor and predict dengue risks in your area.
+                        {t('login_subtitle')}
                     </Text>
                 </View>
 
+
                 <View style={styles.form}>
                     <Input
-                        label="Email Address"
+                        label={t('email')}
                         placeholder="example@mail.com"
                         autoCapitalize="none"
                         keyboardType="email-address"
@@ -118,7 +133,7 @@ export default function LoginScreen() {
                         onChangeText={setEmail}
                     />
                     <Input
-                        label="Password"
+                        label={t('password')}
                         placeholder="••••••••"
                         secureTextEntry
                         value={password}
@@ -126,11 +141,11 @@ export default function LoginScreen() {
                     />
 
                     <TouchableOpacity style={styles.forgotPassword}>
-                        <Text style={{ color: themeColors.primary, fontWeight: '600' }}>Forgot Password?</Text>
+                        <Text style={{ color: themeColors.primary, fontWeight: '600' }}>{t('forgot_password')}</Text>
                     </TouchableOpacity>
 
                     <Button
-                        title={loading ? "Connecting..." : "Connect"}
+                        title={loading ? t('connecting') : t('connect')}
                         onPress={handleLogin}
                         disabled={loading}
                         style={styles.loginButton}
@@ -139,37 +154,39 @@ export default function LoginScreen() {
 
                     <View style={styles.dividerContainer}>
                         <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
-                        <Text style={[styles.dividerText, { color: themeColors.icon }]}>Or</Text>
+                        <Text style={[styles.dividerText, { color: themeColors.icon }]}>{t('or')}</Text>
                         <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
                     </View>
 
                     <View style={styles.socialContainer}>
                         <Button
                             variant="outline"
-                            title="Sign in with Google"
+                            title={t('signin_google')}
                             onPress={() => { }}
                             style={styles.socialButton}
                             icon={<IconSymbol name="g.circle.fill" size={20} color={themeColors.primary} />}
                         />
                         <Button
                             variant="outline"
-                            title="Sign in with Facebook"
+                            title={t('signin_facebook')}
                             onPress={() => { }}
                             style={styles.socialButton}
                             icon={<IconSymbol name="f.circle.fill" size={20} color={themeColors.primary} />}
                         />
                     </View>
 
+
                     <View style={styles.footer}>
                         <Text style={[styles.footerText, { color: themeColors.icon }]}>
-                            Don't have an account?
+                            {t('no_account')}
                         </Text>
                         <Link href="/(auth)/register" asChild>
                             <TouchableOpacity>
-                                <Text style={[styles.footerLink, { color: themeColors.primary }]}> Sign Up</Text>
+                                <Text style={[styles.footerLink, { color: themeColors.primary }]}> {t('signup')}</Text>
                             </TouchableOpacity>
                         </Link>
                     </View>
+
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -177,4 +194,39 @@ export default function LoginScreen() {
 }
 
 // Internal styles removed, now using external authStyles
+const loginPageStyles = StyleSheet.create({
+    langSelector: {
+        position: 'absolute',
+        top: 60,
+        right: 24,
+        zIndex: 100,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    langBtn: {
+        paddingHorizontal: 8,
+    },
+    langText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    divider: {
+        width: 1,
+        height: 14,
+        marginHorizontal: 4,
+    },
+    activeLang: {
+        // Optional active state styling
+    }
+});
+import { StyleSheet } from 'react-native';
 

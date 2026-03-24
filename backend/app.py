@@ -33,25 +33,57 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
 jwt = JWTManager(app)
 
 # --- MongoDB Connection ---
+def get_db_connection():
+    try:
+        # Use certifi for SSL/TLS verification to avoid handshake errors on Windows/macOS/Linux
+        ca = certifi.where()
+        
+        # Initialize MongoClient with robust settings for Atlas
+        # tls=True is implied by mongodb+srv but we set it explicitly for clarity
+        client = MongoClient(
+            MONGODB_URI,
+            tlsCAFile=ca,
+            serverSelectionTimeoutMS=10000,
+            connectTimeoutMS=10000,
+            tls=True
+        )
+        
+        # Test connection immediately by pinging the admin database
+        # This will catch SSL/TLS errors or IP Whitelisting issues early
+        client.admin.command('ping')
+        
+        # Determine database name: use the one in the URI if available, otherwise default
+        db_name = MONGODB_URI.split("/")[-1].split("?")[0] or "Dengue_prediction_db"
+        database = client.get_database(db_name)
+        
+        print(f"✅ Connected to MongoDB Atlas: {db_name}")
+        return client, database
+    except Exception as e:
+        error_msg = str(e)
+        if "TLSV1_ALERT_INTERNAL_ERROR" in error_msg:
+            print("\n❌ CRITICAL: SSL Handshake Failed with 'TLSV1_INTERNAL_ERROR'.")
+            print("👉 This usually indicates your IP is NOT whitelisted in MongoDB Atlas.")
+            print("Action: Go to Atlas -> Network Access -> Add IP Address -> 'Allow Access from Anywhere' (or add your current IP).\n")
+        elif "ServerSelectionTimeoutError" in error_msg:
+            print(f"\n❌ CRITICAL: Could not connect to any MongoDB nodes. Timeout: {e}\n")
+        else:
+            print(f"\n❌ MongoDB Connection Error: {e}\n")
+        raise RuntimeError(f"Database connection failed. Please check your network and Atlas Whitelist.")
+
+# Initialize DB
+client, db = get_db_connection()
+prediction_logs = db.prediction_logs
+users_collection = db.users
+
+# Prime the database with a startup event
 try:
-    # Use certifi for SSL/TLS verification to avoid handshake errors on Windows
-    ca = certifi.where()
-    client = MongoClient(MONGODB_URI, tlsCAFile=ca)
-    # You can change the database name here if needed
-    db = client.get_database("Dengue_prediction_db")
-    prediction_logs = db.prediction_logs
-    users_collection = db.users
-    
-    # "Prime" the database with a startup event so it shows in the UI
     db.system_events.insert_one({
         "event": "backend_started",
         "timestamp": datetime.now(timezone.utc)
     })
-    
-    print("Connected to MongoDB and primed database")
+    print("🚀 Database primed with startup event")
 except Exception as e:
-    print(f"Error connecting to MongoDB: {e}")
-    raise RuntimeError(f"Could not connect to MongoDB: {e}")
+    print(f"⚠️  Warning: Failed to prime database: {e}")
 
 # --- Load AI Model ---
 try:

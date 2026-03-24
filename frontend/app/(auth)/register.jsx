@@ -17,11 +17,15 @@ import { Input } from '@/components/ui/Input';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
 import { authStyles as styles } from '@/styles/authStyles';
+import { useTranslation } from '@/hooks/LanguageContext';
+
 
 export default function RegisterScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
     const router = useRouter();
+    const { t } = useTranslation();
+
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -98,21 +102,22 @@ export default function RegisterScreen() {
                     >
                         <IconSymbol name="chevron.left" size={24} color={themeColors.text} />
                     </TouchableOpacity>
-                    <Text style={[styles.title, { color: themeColors.text }]}>Create Account</Text>
+                    <Text style={[styles.title, { color: themeColors.text }]}>{t('create_account')}</Text>
                     <Text style={[styles.subtitle, { color: themeColors.icon }]}>
-                        Join the community and stay protected from Dengue.
+                        {t('join_community')}
                     </Text>
                 </View>
 
+
                 <View style={styles.form}>
                     <Input
-                        label="Full Name"
+                        label={t('name')}
                         placeholder="John Doe"
                         value={name}
                         onChangeText={setName}
                     />
                     <Input
-                        label="Email Address"
+                        label={t('email')}
                         placeholder="example@mail.com"
                         autoCapitalize="none"
                         keyboardType="email-address"
@@ -120,47 +125,48 @@ export default function RegisterScreen() {
                         onChangeText={setEmail}
                     />
                     <Input
-                        label="Password"
+                        label={t('password')}
                         placeholder="••••••••"
                         secureTextEntry
                         value={password}
                         onChangeText={setPassword}
                     />
                     <Input
-                        label="Confirm Password"
+                        label={t('confirm_password')}
                         placeholder="••••••••"
                         secureTextEntry
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                     />
 
+
                     <View style={styles.termsContainer}>
                         <Text style={[styles.termsText, { color: themeColors.icon }]}>
-                            By signing up, you agree to our
-                            <Text style={{ color: themeColors.primary, fontWeight: '600' }}> Terms of Use </Text>
-                            and
-                            <Text style={{ color: themeColors.primary, fontWeight: '600' }}> Privacy Policy</Text>.
+                             {t('terms_agree')}
                         </Text>
                     </View>
 
+
                     <Button
-                        title={loading ? "Creating Account..." : "Create Account"}
+                        title={loading ? t('creating_account') : t('create_account')}
                         onPress={handleRegister}
                         disabled={loading}
                         style={styles.registerButton}
                         icon={loading ? <ActivityIndicator color="#fff" size="small" /> : null}
                     />
 
+
                     <View style={styles.footer}>
                         <Text style={[styles.footerText, { color: themeColors.icon }]}>
-                            Already have an account?
+                             {t('already_have_account')}
                         </Text>
                         <Link href="/(auth)/login" asChild>
                             <TouchableOpacity>
-                                <Text style={[styles.footerLink, { color: themeColors.primary }]}> Log In</Text>
+                                <Text style={[styles.footerLink, { color: themeColors.primary }]}> {t('log_in')}</Text>
                             </TouchableOpacity>
                         </Link>
                     </View>
+
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>

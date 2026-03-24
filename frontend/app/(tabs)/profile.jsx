@@ -19,11 +19,13 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
+import { useTranslation } from '@/hooks/LanguageContext';
 
 export default function ProfileScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
     const router = useRouter();
+    const { t, lang, changeLanguage } = useTranslation();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -128,22 +130,22 @@ export default function ProfileScreen() {
                 </View>
 
                 <Card style={styles.formCard}>
-                    <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Edit Details</Text>
+                    <Text style={[styles.sectionTitle, { color: themeColors.text }]}>{t('edit_details')}</Text>
                     <Input
-                        label="Full Name"
+                        label={t('name')}
                         placeholder="Your Name"
                         value={name}
                         onChangeText={setName}
                     />
                     <Input
-                        label="Email Address"
+                        label={t('email')}
                         value={email}
                         editable={false}
                         containerStyle={{ opacity: 0.7 }}
                     />
                     
                     <Button
-                        title={updating ? "Updating..." : "Save Changes"}
+                        title={updating ? "Updating..." : t('save_changes')}
                         onPress={handleUpdate}
                         disabled={updating}
                         style={styles.saveButton}
@@ -151,21 +153,50 @@ export default function ProfileScreen() {
                 </Card>
 
                 <View style={styles.actionsContainer}>
+                    <View style={styles.sectionHeaderRow}>
+                         <Text style={[styles.sectionTitleSmall, { color: themeColors.text }]}>{t('language')}</Text>
+                    </View>
+                    
+                    <View style={styles.languageToggleContainer}>
+                        <TouchableOpacity 
+                            style={[
+                                styles.languageButton, 
+                                { backgroundColor: lang === 'en' ? themeColors.primary : themeColors.surface, borderColor: themeColors.border }
+                            ]}
+                            onPress={() => changeLanguage('en')}
+                        >
+                            <Text style={[styles.languageButtonText, { color: lang === 'en' ? '#FFF' : themeColors.text }]}>English</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={[
+                                styles.languageButton, 
+                                { backgroundColor: lang === 'si' ? themeColors.primary : themeColors.surface, borderColor: themeColors.border }
+                            ]}
+                            onPress={() => changeLanguage('si')}
+                        >
+                            <Text style={[styles.languageButtonText, { color: lang === 'si' ? '#FFF' : themeColors.text }]}>සිංහල</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <Text style={[styles.sectionTitleSmall, { color: themeColors.text, marginTop: 16 }]}>Settings</Text>
+
                     <TouchableOpacity style={styles.actionRow}>
                         <View style={[styles.actionIcon, { backgroundColor: '#E8F5E9' }]}>
                             <IconSymbol name="shield.fill" size={20} color="#2ECC71" />
                         </View>
-                        <Text style={[styles.actionText, { color: themeColors.text }]}>Privacy Settings</Text>
+                        <Text style={[styles.actionText, { color: themeColors.text }]}>{t('privacy_settings')}</Text>
                         <IconSymbol name="chevron.right" size={20} color={themeColors.icon} />
                     </TouchableOpacity>
+
 
                     <TouchableOpacity style={styles.actionRow}>
                         <View style={[styles.actionIcon, { backgroundColor: '#FFF3E0' }]}>
                             <IconSymbol name="bell.fill" size={20} color="#F39C12" />
                         </View>
-                        <Text style={[styles.actionText, { color: themeColors.text }]}>Notification Prefs</Text>
+                        <Text style={[styles.actionText, { color: themeColors.text }]}>{t('notification_prefs')}</Text>
                         <IconSymbol name="chevron.right" size={20} color={themeColors.icon} />
                     </TouchableOpacity>
+
 
                     <TouchableOpacity 
                         style={[styles.actionRow, styles.logoutRow]}
@@ -174,8 +205,9 @@ export default function ProfileScreen() {
                         <View style={[styles.actionIcon, { backgroundColor: '#FFEBEE' }]}>
                             <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#FF4757" />
                         </View>
-                        <Text style={[styles.actionText, { color: '#FF4757' }]}>Sign Out</Text>
+                        <Text style={[styles.actionText, { color: '#FF4757' }]}>{t('sign_out')}</Text>
                     </TouchableOpacity>
+
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -250,5 +282,29 @@ const styles = StyleSheet.create({
     },
     logoutRow: {
         marginTop: 12,
+    },
+    sectionTitleSmall: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 8,
+        paddingHorizontal: 4,
+    },
+    languageToggleContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 8,
+    },
+    languageButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    languageButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
     }
 });
+

@@ -14,10 +14,14 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { API_BASE_URL } from '@/constants/api';
+import { useTranslation } from '@/hooks/LanguageContext';
+
 
 export default function PredictionScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
+    const { t } = useTranslation();
+
 
     const [temp, setTemp] = useState('');
     const [precip, setPrecip] = useState('');
@@ -70,29 +74,30 @@ export default function PredictionScreen() {
     return (
         <ScrollView style={[styles.container, { backgroundColor: themeColors.background }]}>
             <View style={styles.header}>
-                <Text style={[styles.title, { color: themeColors.text }]}>Data-Driven Prediction</Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>{t('prediction_title')}</Text>
                 <Text style={[styles.subtitle, { color: themeColors.icon }]}>
-                    Enter local weather data to calculate Dengue risk level.
+                    {t('prediction_subtitle')}
                 </Text>
             </View>
 
+
             <View style={styles.form}>
                 <Input
-                    label="Average Temperature (°C)"
+                    label={t('temp')}
                     placeholder="e.g. 28.5"
                     keyboardType="numeric"
                     value={temp}
                     onChangeText={setTemp}
                 />
                 <Input
-                    label="Average Precipitation (mm)"
+                    label={t('precip')}
                     placeholder="e.g. 120.0"
                     keyboardType="numeric"
                     value={precip}
                     onChangeText={setPrecip}
                 />
                 <Input
-                    label="Average Humidity (%)"
+                    label={t('humidity')}
                     placeholder="e.g. 75.0"
                     keyboardType="numeric"
                     value={humidity}
@@ -100,26 +105,28 @@ export default function PredictionScreen() {
                 />
 
                 <Button
-                    title={loading ? "Calculating..." : "Get Prediction"}
+                    title={loading ? t('calculating') : t('get_prediction')}
                     onPress={handlePredict}
                     disabled={loading}
                     style={styles.predictButton}
                 />
             </View>
 
+
             {loading && <ActivityIndicator size="large" color={themeColors.primary} style={styles.loader} />}
 
             {result && (
                 <Card style={[styles.resultCard, { borderColor: result.risk_level === 'High' ? '#FF4757' : '#2ECC71', borderLeftWidth: 8 }]}>
-                    <Text style={[styles.resultLabel, { color: themeColors.icon }]}>Predicted Risk Level</Text>
+                    <Text style={[styles.resultLabel, { color: themeColors.icon }]}>{t('predicted_risk')}</Text>
                     <Text style={[styles.resultValue, { color: result.risk_level === 'High' ? '#FF4757' : '#2ECC71' }]}>
-                        {result.risk_level}
+                        {result.risk_level === 'High' ? t('high') : t('low')}
                     </Text>
                     <Text style={[styles.resultDetail, { color: themeColors.text }]}>
-                        Estimated cases based on your data: {result.predicted_cases}
+                        {t('estimated_cases')} {result.predicted_cases}
                     </Text>
                 </Card>
             )}
+
         </ScrollView>
     );
 }

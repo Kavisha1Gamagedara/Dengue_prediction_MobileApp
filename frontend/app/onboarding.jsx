@@ -6,7 +6,8 @@ import {
     Dimensions,
     TouchableOpacity,
     SafeAreaView,
-    ActivityIndicator
+    ActivityIndicator,
+    Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -15,29 +16,11 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Button } from '@/components/ui/Button';
 import { API_BASE_URL } from '@/constants/api';
+import { useTranslation } from '@/hooks/LanguageContext';
+
 
 const { width, height } = Dimensions.get('window');
 
-const ONBOARDING_DATA = [
-    {
-        title: "Welcome to SecureKit",
-        description: "Your advanced AI partner in predicting and preventing Dengue outbreaks in your local area.",
-        icon: "shield.fill",
-        color: "#4A90E2"
-    },
-    {
-        title: "Stay Alerted",
-        description: "Receive real-time notifications when risk levels rise. We use live weather data to keep you informed.",
-        icon: "bell.fill",
-        color: "#F1C40F"
-    },
-    {
-        title: "Data-Driven Prediction",
-        description: "Enter local environmental stats to get accurate risk levels and estimated case counts using our ML model.",
-        icon: "chart.bar.fill",
-        color: "#8A232E"
-    }
-];
 
 export default function OnboardingFlow() {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,6 +28,42 @@ export default function OnboardingFlow() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
     const router = useRouter();
+    const { t } = useTranslation();
+
+    const ONBOARDING_DATA = [
+        {
+            title: t('welcome_title'),
+            description: t('welcome_desc'),
+            image: require('@/assets/logo2.png'),
+            color: "#4A90E2"
+        },
+        {
+            title: t('stay_alerted'),
+            description: t('stay_alerted_desc'),
+            icon: "bell.fill",
+            color: "#F1C40F"
+        },
+        {
+            title: t('data_driven'),
+            description: t('data_driven_desc'),
+            icon: "chart.bar.fill",
+            color: "#8A232E"
+        },
+        {
+            title: t('prevention_protection'),
+            description: t('prevention_protection_desc'),
+            points: [
+                "Search and destroy breeding sites weekly",
+                "Use repellents and wear long-sleeved clothes",
+                "Join community clean-ups (Shramadana)",
+                "Seek medical help if fever lasts over 3 days",
+                "Use ONLY Paracetamol for fever management"
+            ],
+            icon: "hand.raised.fill",
+            color: "#2ECC71"
+        }
+    ];
+
 
     const handleNext = async () => {
         if (currentIndex < ONBOARDING_DATA.length - 1) {
@@ -88,19 +107,40 @@ export default function OnboardingFlow() {
         <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
-                    <Text style={[styles.skipText, { color: themeColors.icon }]}>Skip</Text>
+                    <Text style={[styles.skipText, { color: themeColors.icon }]}>{t('skip')}</Text>
                 </TouchableOpacity>
             </View>
 
+
             <View style={styles.content}>
+                <Image 
+                    source={require('@/assets/SLlion2.png')}
+                    style={styles.backgroundLion}
+                    resizeMode="contain"
+                />
                 <View style={[styles.iconContainer, { backgroundColor: currentItem.color + '20' }]}>
-                    <IconSymbol name={currentItem.icon} size={80} color={currentItem.color} />
+                    {currentItem.image ? (
+                        <Image source={currentItem.image} style={styles.imageIcon} resizeMode="contain" />
+                    ) : (
+                        <IconSymbol name={currentItem.icon} size={80} color={currentItem.color} />
+                    )}
                 </View>
 
                 <Text style={[styles.title, { color: themeColors.text }]}>{currentItem.title}</Text>
                 <Text style={[styles.description, { color: themeColors.icon }]}>
                     {currentItem.description}
                 </Text>
+
+                {currentItem.points && (
+                    <View style={styles.pointsContainer}>
+                        {currentItem.points.map((point, index) => (
+                            <View key={index} style={styles.pointItem}>
+                                <View style={[styles.bullet, { backgroundColor: currentItem.color }]} />
+                                <Text style={[styles.pointText, { color: themeColors.text }]}>{point}</Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
             </View>
 
             <View style={styles.footer}>
@@ -118,9 +158,10 @@ export default function OnboardingFlow() {
                 </View>
 
                 <Button
-                    title={loading ? "Starting..." : (currentIndex === ONBOARDING_DATA.length - 1 ? "Get Started" : "Next")}
+                    title={loading ? t('starting') : (currentIndex === ONBOARDING_DATA.length - 1 ? t('get_started') : t('next'))}
                     onPress={handleNext}
                     disabled={loading}
+
                     style={styles.button}
                     icon={loading ? <ActivityIndicator color="#fff" size="small" /> : null}
                 />
@@ -148,6 +189,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 40,
     },
+    backgroundLion: {
+        position: 'absolute',
+        width: width * 0.8,
+        height: width * 0.8,
+        opacity: 0.08, // Very subtle background logo
+    },
+    imageIcon: {
+        width: 100,
+        height: 100,
+    },
     iconContainer: {
         width: 160,
         height: 160,
@@ -166,6 +217,29 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
+        marginBottom: 24,
+    },
+    pointsContainer: {
+        width: '100%',
+        marginTop: 8,
+        gap: 12,
+    },
+    pointItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        gap: 12,
+    },
+    bullet: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    pointText: {
+        fontSize: 15,
+        fontWeight: '500',
+        lineHeight: 20,
+        flex: 1,
     },
     footer: {
         paddingHorizontal: 24,

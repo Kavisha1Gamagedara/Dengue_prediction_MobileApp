@@ -103,6 +103,18 @@ export const dashboardStyles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
     },
+    quickActionsContainer: {
+        position: 'relative',
+    },
+    backgroundLion: {
+        position: 'absolute',
+        right: 40,
+        top: 300,
+        width: 300,
+        height: 300,
+        opacity: 0.15,
+        zIndex: 0,
+    },
     statsCard: {
         marginBottom: 32,
     },

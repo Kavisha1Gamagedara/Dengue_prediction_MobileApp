@@ -4,7 +4,8 @@ import {
     View,
     ScrollView,
     TouchableOpacity,
-    ActivityIndicator
+    ActivityIndicator,
+    Image
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SecureStore from 'expo-secure-store';
@@ -15,11 +16,15 @@ import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { dashboardStyles as styles } from '@/styles/dashboardStyles';
+import { useTranslation } from '@/hooks/LanguageContext';
+
 
 export default function DashboardScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
     const router = useRouter();
+    const { t } = useTranslation();
+
     
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -66,12 +71,19 @@ export default function DashboardScreen() {
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             <StatusBar style="auto" />
 
+            <Image 
+                source={require('@/assets/SLlion2.png')}
+                style={styles.backgroundLion}
+                resizeMode="contain"
+            />
+
             {/* Custom Header */}
             <View style={styles.header}>
                 <View>
-                    <Text style={[styles.greeting, { color: themeColors.icon }]}>Hello, {user?.name || 'User'}</Text>
-                    <Text style={[styles.title, { color: themeColors.text }]}>Stay Safe Today</Text>
+                    <Text style={[styles.greeting, { color: themeColors.icon }]}>{t('hello')}, {user?.name || 'User'}</Text>
+                    <Text style={[styles.title, { color: themeColors.text }]}>{t('stay_safe_today')}</Text>
                 </View>
+
                 <TouchableOpacity 
                     onPress={() => router.push('/(tabs)/profile')}
                     style={[styles.profileButton, { backgroundColor: themeColors.surface }]}
@@ -94,69 +106,76 @@ export default function DashboardScreen() {
                     />
                     <View style={styles.riskHeader}>
                         <View style={styles.riskInfo}>
-                            <Text style={styles.riskLabel}>Current Risk Level</Text>
-                            <Text style={styles.riskValue}>Moderate</Text>
+                            <Text style={styles.riskLabel}>{t('current_risk_level')}</Text>
+                            <Text style={styles.riskValue}>{t('moderate')}</Text>
                         </View>
                         <View style={styles.riskIconContainer}>
                             <IconSymbol name="exclamationmark.shield.fill" size={32} color="#FFF" />
                         </View>
                     </View>
                     <Text style={styles.riskDesc}>
-                        Case numbers are increasing in your area. Ensure you have mosquito protection.
+                        {t('risk_desc')}
                     </Text>
+
                 </Card>
 
                 {/* Quick Actions */}
-                <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Quick Actions</Text>
-                <View style={styles.actionGrid}>
-                    <ActionItem
-                        icon="doc.text.fill"
-                        title="Report Case"
-                        color="#4A90E2"
-                        themeColors={themeColors}
-                    />
-                    <ActionItem
-                        icon="chart.bar.fill"
-                        title="Prediction"
-                        color={themeColors.primary}
-                        themeColors={themeColors}
-                    />
-                    <ActionItem
-                        icon="hand.raised.fill"
-                        title="Prevention"
-                        color="#2ECC71"
-                        themeColors={themeColors}
-                    />
-                    <ActionItem
-                        icon="bell.fill"
-                        title="Alerts"
-                        color="#F1C40F"
-                        themeColors={themeColors}
-                    />
+                <View style={styles.quickActionsContainer}>
+                    <Text style={[styles.sectionTitle, { color: themeColors.text }]}>{t('quick_actions')}</Text>
+                    <View style={styles.actionGrid}>
+                        <ActionItem
+                            icon="doc.text.fill"
+                            title={t('report_case')}
+                            color="#4A90E2"
+                            themeColors={themeColors}
+                        />
+                        <ActionItem
+                            icon="chart.bar.fill"
+                            title={t('prediction')}
+                            color={themeColors.primary}
+                            themeColors={themeColors}
+                        />
+                        <ActionItem
+                            icon="hand.raised.fill"
+                            title={t('prevention')}
+                            color="#2ECC71"
+                            themeColors={themeColors}
+                        />
+                        <ActionItem
+                            icon="bell.fill"
+                            title={t('alerts')}
+                            color="#F1C40F"
+                            themeColors={themeColors}
+                        />
+                    </View>
                 </View>
 
+
                 {/* Statistics Section */}
-                <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Area Statistics</Text>
+                <Text style={[styles.sectionTitle, { color: themeColors.text }]}>{t('area_statistics')}</Text>
                 <Card variant="outlined" style={styles.statsCard}>
+
                     <View style={styles.statRow}>
-                        <StatItem label="Active Cases" value="24" color="#FF4757" />
+                        <StatItem label={t('active_cases')} value="24" color="#FF4757" />
                         <View style={[styles.statDivider, { backgroundColor: themeColors.border }]} />
-                        <StatItem label="Recovered" value="156" color="#2ECC71" />
+                        <StatItem label={t('recovered')} value="156" color="#2ECC71" />
                         <View style={[styles.statDivider, { backgroundColor: themeColors.border }]} />
-                        <StatItem label="Risk Area" value="Zone B" color="#F1C40F" />
+                        <StatItem label={t('risk_area')} value="Zone B" color="#F1C40F" />
                     </View>
                 </Card>
+
 
                 {/* Tip of the Day */}
                 <Card style={styles.tipCard}>
                     <View style={styles.tipContent}>
                         <IconSymbol name="lightbulb.fill" size={24} color={themeColors.primary} />
                         <View style={styles.tipTextContainer}>
-                            <Text style={[styles.tipTitle, { color: themeColors.text }]}>Pro Tip</Text>
+                            <Text style={[styles.tipTitle, { color: themeColors.text }]}>{t('pro_tip')}</Text>
                             <Text style={[styles.tipDesc, { color: themeColors.icon }]}>
-                                Empty stagnant water from flower pots every week to prevent mosquito breeding.
+                                {t('tip_desc')}
                             </Text>
                         </View>
+
                     </View>
                 </Card>
             </ScrollView>
