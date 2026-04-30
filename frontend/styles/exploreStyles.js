@@ -40,6 +40,15 @@ export const exploreStyles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E9ECEF',
     },
+    map: {
+        width: '100%',
+        height: '100%',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     mapGradient: {
         position: 'absolute',
         width: '100%',

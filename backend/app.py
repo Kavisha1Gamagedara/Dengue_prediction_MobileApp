@@ -10,6 +10,9 @@ import joblib
 import pandas as pd
 from pymongo import MongoClient
 import certifi
+import firebase_admin
+from firebase_admin import credentials, messaging
+from statsmodels.tsa.statespace.sarimax import SARIMAXResults
 
 app = Flask(__name__)
 # Enable CORS for the frontend (assumed to be running on another port)
@@ -85,14 +88,30 @@ try:
 except Exception as e:
     print(f"⚠️  Warning: Failed to prime database: {e}")
 
-# --- Load AI Model ---
+# --- Load Models ---
 try:
     model = joblib.load('dengue_model.pkl')
-    print("Model loaded successfully")
+    print("Standard Model loaded successfully")
 except Exception as e:
-    print(f"Error loading model: {e}")
-    # We continue even if model fails to load, but /predict will fail
+    print(f"Error loading standard model: {e}")
     model = None
+
+try:
+    sarimax_model = joblib.load('sarimax_model.joblib')
+    print("SARIMAX Model loaded successfully")
+except Exception as e:
+    print(f"Error loading SARIMAX model: {e}")
+    sarimax_model = None
+
+# --- Firebase Initialization ---
+# Path to your firebase-service-account.json
+FIREBASE_CRED_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
+if FIREBASE_CRED_PATH and os.path.exists(FIREBASE_CRED_PATH):
+    cred = credentials.Certificate(FIREBASE_CRED_PATH)
+    firebase_admin.initialize_app(cred)
+    print("🔥 Firebase initialized successfully")
+else:
+    print("⚠️  Firebase credentials not found. FCM will be disabled.")
 
 # --- Helpers ---
 def serialize_doc(doc):
@@ -235,21 +254,25 @@ def predict_risk():
         current_user_id = get_jwt_identity()
         data = request.get_json()
         
-        # Ensure all required features are present
-        # Features expected by the model: Temp_avg, Precipitation_avg, Humidity_avg
         required_fields = ['Temp_avg', 'Precipitation_avg', 'Humidity_avg']
         for field in required_fields:
             if field not in data:
                 return jsonify({'status': 'error', 'message': f'Missing field: {field}'}), 400
 
-        input_df = pd.DataFrame([data])
+        # The model requires Rainfall_Lag_1. We use Precipitation_avg as a proxy.
+        input_data = {
+            'Temp_avg': data.get('Temp_avg'),
+            'Precipitation_avg': data.get('Precipitation_avg'),
+            'Humidity_avg': data.get('Humidity_avg'),
+            'Rainfall_Lag_1': data.get('Precipitation_avg')
+        }
         
-        # 1. Get AI Prediction
+        input_df = pd.DataFrame([input_data])
+        
         prediction = model.predict(input_df)
         predicted_cases = round(float(prediction[0]), 2)
         risk_level = 'High' if predicted_cases > 100 else 'Low'
 
-        # 2. Log the request into MongoDB
         log_entry = {
             "user_id": current_user_id,
             "temp": data.get('Temp_avg'),
@@ -271,6 +294,89 @@ def predict_risk():
     except Exception as e:
         print(f"Prediction error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 400
+
+@app.route('/predict_sarimax', methods=['POST'])
+@jwt_required()
+def predict_sarimax():
+    if sarimax_model is None:
+        return jsonify({'status': 'error', 'message': 'SARIMAX model not loaded'}), 500
+        
+    try:
+        data = request.get_json()
+        # SARIMAX usually forecasts the next step based on historical context
+        # But we can provide new exogenous variables for the forecast
+        exog_data = pd.DataFrame([{
+            'Temp_avg': data.get('Temp_avg'),
+            'Precipitation_avg': data.get('Precipitation_avg'),
+            'Humidity_avg': data.get('Humidity_avg')
+        }])
+        
+        # Forecast 1 step ahead
+        forecast = sarimax_model.get_forecast(steps=1, exog=exog_data)
+        
+        # Clip negative predictions to 0 for realistic output
+        predicted_cases = max(0.0, round(float(forecast.predicted_mean.iloc[0]), 2))
+        risk_level = 'High' if predicted_cases > 100 else 'Low'
+        
+        return jsonify({
+            'status': 'success',
+            'predicted_cases': predicted_cases,
+            'risk_level': risk_level,
+            'method': 'SARIMAX'
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+
+@app.route('/heatmap', methods=['GET'])
+def get_heatmap_data():
+    try:
+        # In a real app, you'd aggregate recent logs or use a separate collection
+        # Here we mock it from the CSV for demonstration
+        df = pd.read_csv('../dengue_data_with_weather_data.csv')
+        # Get the latest month data
+        latest_data = df[df['Year'] == df['Year'].max()]
+        latest_data = latest_data[latest_data['Month'] == latest_data['Month'].max()]
+        
+        import numpy as np
+        max_cases_log = np.log1p(latest_data['Cases'].max())
+
+        heatmap_points = []
+        for _, row in latest_data.iterrows():
+            # Use logarithmic scaling so smaller outbreaks are still visible
+            # compared to extreme hotspots like Colombo
+            weight = np.log1p(row['Cases']) / max_cases_log
+            
+            heatmap_points.append({
+                'lat': row['Latitude'],
+                'lng': row['Longitude'],
+                'weight': weight,
+                'district': row['District'],
+                'cases': int(row['Cases'])
+            })
+            
+        return jsonify(heatmap_points), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/register_fcm_token', methods=['POST'])
+@jwt_required()
+def register_fcm_token():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        token = data.get('fcm_token')
+        
+        if not token:
+            return jsonify({'message': 'Token is required'}), 400
+            
+        from bson import ObjectId
+        users_collection.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'fcm_token': token}}
+        )
+        return jsonify({'message': 'FCM Token registered successfully'}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
 
 @app.route('/history', methods=['GET'])
 @jwt_required()

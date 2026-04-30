@@ -11,6 +11,7 @@ import {
     Platform
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -20,21 +21,80 @@ import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
 import { useTranslation } from '@/hooks/LanguageContext';
+import { useNotifications } from '@/hooks/useNotifications';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
     const router = useRouter();
     const { t, lang, changeLanguage } = useTranslation();
+    const { registerForPushNotificationsAsync, scheduleDailyAlert } = useNotifications();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [notificationTime, setNotificationTime] = useState(new Date());
+    const [showTimePicker, setShowTimePicker] = useState(false);
 
     useEffect(() => {
         fetchProfile();
+        loadNotificationPrefs();
     }, []);
+
+    const loadNotificationPrefs = async () => {
+        try {
+            const enabled = await SecureStore.getItemAsync('notificationsEnabled');
+            const time = await SecureStore.getItemAsync('notificationTime');
+            if (enabled !== null) {
+                const isEnabled = enabled === 'true';
+                setNotificationsEnabled(isEnabled);
+                if (isEnabled && time) {
+                    const [h, m] = time.split(':');
+                    scheduleDailyAlert(parseInt(h), parseInt(m));
+                    registerForPushNotificationsAsync();
+                }
+            }
+            if (time !== null) {
+                const [hours, minutes] = time.split(':');
+                const d = new Date();
+                d.setHours(parseInt(hours), parseInt(minutes), 0);
+                setNotificationTime(d);
+            }
+        } catch (error) {
+            console.error('Error loading notification prefs:', error);
+        }
+    };
+
+    const saveNotificationPrefs = async (enabled, time) => {
+        try {
+            const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+            await SecureStore.setItemAsync('notificationsEnabled', String(enabled));
+            await SecureStore.setItemAsync('notificationTime', timeStr);
+            
+            if (enabled) {
+                await scheduleDailyAlert(time.getHours(), time.getMinutes());
+                await registerForPushNotificationsAsync();
+            } else {
+                await Notifications.cancelAllScheduledNotificationsAsync();
+            }
+            
+            Alert.alert('Success', 'Notification preferences saved');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to save preferences');
+        }
+    };
+
+    const onTimeChange = (event, selectedDate) => {
+        const currentDate = selectedDate || notificationTime;
+        setShowTimePicker(Platform.OS === 'ios');
+        setNotificationTime(currentDate);
+        if (event.type === 'set' || Platform.OS === 'ios') {
+            saveNotificationPrefs(notificationsEnabled, currentDate);
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -201,13 +261,58 @@ export default function ProfileScreen() {
                     </TouchableOpacity>
 
 
-                    <TouchableOpacity style={styles.actionRow}>
-                        <View style={[styles.actionIcon, { backgroundColor: '#FFF3E0' }]}>
-                            <IconSymbol name="bell.fill" size={20} color="#F39C12" />
+                    <Card style={[styles.notificationCard, { backgroundColor: themeColors.surface }]}>
+                        <View style={styles.notificationHeader}>
+                            <View style={[styles.actionIcon, { backgroundColor: '#FFF3E0' }]}>
+                                <IconSymbol name="bell.fill" size={20} color="#F39C12" />
+                            </View>
+                            <Text style={[styles.actionText, { color: themeColors.text }]}>{t('notification_prefs')}</Text>
+                            <TouchableOpacity 
+                                onPress={() => {
+                                    const newVal = !notificationsEnabled;
+                                    setNotificationsEnabled(newVal);
+                                    saveNotificationPrefs(newVal, notificationTime);
+                                }}
+                            >
+                                <View style={[
+                                    styles.toggleBackground, 
+                                    { backgroundColor: notificationsEnabled ? themeColors.primary : themeColors.icon + '40' }
+                                ]}>
+                                    <View style={[
+                                        styles.toggleCircle, 
+                                        { transform: [{ translateX: notificationsEnabled ? 20 : 0 }] }
+                                    ]} />
+                                </View>
+                            </TouchableOpacity>
                         </View>
-                        <Text style={[styles.actionText, { color: themeColors.text }]}>{t('notification_prefs')}</Text>
-                        <IconSymbol name="chevron.right" size={20} color={themeColors.icon} />
-                    </TouchableOpacity>
+
+                        {notificationsEnabled && (
+                            <View style={styles.timeSelectionContainer}>
+                                <Text style={[styles.timeLabel, { color: themeColors.icon }]}>Alert Time</Text>
+                                <View style={styles.timePickerRow}>
+                                    <TouchableOpacity 
+                                        style={[styles.timeChip, { backgroundColor: themeColors.primary + '15' }]}
+                                        onPress={() => setShowTimePicker(true)}
+                                    >
+                                        <Text style={[styles.timeText, { color: themeColors.primary }]}>
+                                            {notificationTime.getHours().toString().padStart(2, '0')}:{notificationTime.getMinutes().toString().padStart(2, '0')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                                
+                                {showTimePicker && (
+                                    <DateTimePicker
+                                        value={notificationTime}
+                                        mode="time"
+                                        is24Hour={true}
+                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                        onChange={onTimeChange}
+                                    />
+                                )}
+                                <Text style={styles.timeHelper}>You will receive danger area alerts at this time.</Text>
+                            </View>
+                        )}
+                    </Card>
 
 
                     <TouchableOpacity 
@@ -317,6 +422,65 @@ const styles = StyleSheet.create({
     languageButtonText: {
         fontSize: 16,
         fontWeight: '600',
+    },
+    notificationCard: {
+        padding: 16,
+        borderRadius: 20,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    notificationHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    toggleBackground: {
+        width: 48,
+        height: 28,
+        borderRadius: 14,
+        padding: 4,
+        justifyContent: 'center',
+    },
+    toggleCircle: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#FFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    timeSelectionContainer: {
+        marginTop: 20,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+    },
+    timeLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 12,
+    },
+    timePickerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    timeChip: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    timeText: {
+        fontSize: 20,
+        fontWeight: '700',
+    },
+    timeHelper: {
+        fontSize: 12,
+        color: '#95A5A6',
+        fontStyle: 'italic',
     }
 });
 

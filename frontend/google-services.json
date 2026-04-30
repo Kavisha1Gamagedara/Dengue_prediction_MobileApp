@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "517122465540",
+    "project_id": "dengue-prediction-21b4b",
+    "storage_bucket": "dengue-prediction-21b4b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:517122465540:android:e9ac8135d79993d5a1ba51",
+        "android_client_info": {
+          "package_name": "com.kavisha.dengueapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdkrCxZ49n8NSdk24_Py07Tcp089YIfwY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

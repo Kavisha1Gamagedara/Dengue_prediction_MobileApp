@@ -1,19 +1,69 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Text,
     View,
-    TouchableOpacity
+    TouchableOpacity,
+    ActivityIndicator
 } from 'react-native';
+import MapView, { Heatmap, PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { LinearGradient } from 'expo-linear-gradient';
 import { exploreStyles as styles } from '@/styles/exploreStyles';
+import { API_BASE_URL } from '@/constants/api';
 
 export default function ExploreScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const themeColors = Colors[colorScheme];
+    const [location, setLocation] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [heatmapData, setHeatmapData] = useState([]);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                let { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    setErrorMsg('Permission to access location was denied');
+                } else {
+                    let loc = await Location.getCurrentPositionAsync({});
+                    setLocation(loc);
+                }
+            } catch (err) {
+                console.warn("Location error:", err);
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/heatmap`);
+                const data = await response.json();
+                
+                // Format data for React Native Maps Heatmap
+                const formattedData = data.map(point => ({
+                    latitude: parseFloat(point.lat),
+                    longitude: parseFloat(point.lng),
+                    weight: parseFloat(point.weight) * 10, // Scale weight for visibility
+                    district: point.district,
+                    cases: point.cases
+                }));
+                
+                setHeatmapData(formattedData);
+            } catch (err) {
+                console.error("Error fetching heatmap data:", err);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
+
+    const initialRegion = {
+        latitude: 7.8731, // Center of Sri Lanka
+        longitude: 80.7718,
+        latitudeDelta: 4.5,
+        longitudeDelta: 4.5,
+    };
 
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -25,21 +75,52 @@ export default function ExploreScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Mock Map View */}
+            {/* Google Map View with Heatmap */}
             <View style={[styles.mapPlaceholder, { backgroundColor: themeColors.surface }]}>
-                <LinearGradient
-                    colors={['#E3F2FD', '#BBDEFB']}
-                    style={styles.mapGradient}
-                />
-                {/* Mock Data Points */}
-                <RiskMarker top="30%" left="40%" level="high" />
-                <RiskMarker top="50%" left="60%" level="low" />
-                <RiskMarker top="45%" left="20%" level="medium" />
-                <RiskMarker top="70%" left="50%" level="high" />
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={themeColors.primary} />
+                        <Text style={{ marginTop: 10, color: themeColors.icon }}>Loading Map Data...</Text>
+                    </View>
+                ) : (
+                    <MapView
+                        provider={PROVIDER_GOOGLE}
+                        style={styles.map}
+                        initialRegion={initialRegion}
+                        showsUserLocation={true}
+                    >
+                        {heatmapData.length > 0 && (
+                            <Heatmap
+                                points={heatmapData}
+                                radius={50}
+                                opacity={0.8}
+                                gradient={{
+                                    colors: ["#2ECC71", "#F1C40F", "#FF4757"], // Green (Low) -> Yellow (Medium) -> Red (High)
+                                    startPoints: [0.1, 0.4, 0.7],
+                                    colorMapSize: 256,
+                                }}
+                            />
+                        )}
+                        {heatmapData.map((zone, index) => {
+                            // Only show markers for high risk areas to avoid clutter
+                            if (zone.weight < 5) return null; 
+                            
+                            return (
+                                <Marker
+                                    key={index}
+                                    coordinate={{ latitude: zone.latitude, longitude: zone.longitude }}
+                                    title={zone.district}
+                                    description={`Cases: ${zone.cases}`}
+                                    pinColor={zone.weight > 8 ? '#FF4757' : '#F1C40F'}
+                                />
+                            );
+                        })}
+                    </MapView>
+                )}
 
                 <View style={styles.mapOverlay}>
                     <Text style={[styles.mapStatus, { color: themeColors.icon }]}>
-                        Showing live dengue risk clusters in your region.
+                        {errorMsg ? errorMsg : "Showing live dengue risk clusters across Sri Lanka."}
                     </Text>
                 </View>
             </View>
@@ -59,20 +140,13 @@ export default function ExploreScreen() {
                     <View>
                         <Text style={[styles.infoTitle, { color: themeColors.text }]}>Safety Alert</Text>
                         <Text style={[styles.infoDesc, { color: themeColors.icon }]}>
-                            High activity detected in Colombo North.
+                            {heatmapData.length > 0 
+                                ? `Highest activity detected in ${heatmapData.reduce((prev, current) => (prev.cases > current.cases) ? prev : current).district}.`
+                                : "Analyzing current risk data..."}
                         </Text>
                     </View>
                 </View>
             </Card>
-        </View>
-    );
-}
-
-function RiskMarker({ top, left, level }) {
-    const color = level === 'high' ? '#FF4757' : level === 'medium' ? '#F1C40F' : '#2ECC71';
-    return (
-        <View style={[styles.marker, { top, left, backgroundColor: color + '40', borderColor: color }]}>
-            <View style={[styles.markerDot, { backgroundColor: color }]} />
         </View>
     );
 }
@@ -85,6 +159,7 @@ function LegendItem({ color, label }) {
         </View>
     );
 }
+
 
 // Internal styles removed, now using external exploreStyles
 
