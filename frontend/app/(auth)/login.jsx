@@ -268,25 +268,30 @@ export default function LoginScreen() {
                     </View>
 
                     <TouchableOpacity
-                        style={{ marginTop: 20, alignItems: 'center' }}
+                        style={{ marginTop: 20, alignItems: 'center', padding: 10 }}
                         onPress={async () => {
+                            // THE ABSOLUTE TRUTH - NO MORE HIDDEN CHARACTERS
+                            const cleanUrl = 'https://dengue-backend-1994.onrender.com';
+
                             try {
-                                const cleanBaseUrl = API_BASE_URL.trim().replace(/\/+$/, '');
-                                // Try the root path first since we know it responds to HEAD /
-                                const res = await fetch(`${cleanBaseUrl}/`);
+                                const res = await fetch(`${cleanUrl}/ping`, {
+                                    method: 'GET',
+                                    headers: { 'Accept': 'application/json' }
+                                });
                                 const text = await res.text();
+
                                 try {
                                     const data = JSON.parse(text);
-                                    Alert.alert('Server Status', `✅ Backend is reachable!\n\nStatus: ${res.status}\nMessage: ${data.message || 'Online'}`);
+                                    Alert.alert('Server Status', `✅ SUCCESS!\n\nStatus: ${res.status}\nMessage: ${data.message}\nDB: ${data.db_status ? 'CONNECTED' : 'OFFLINE'}`);
                                 } catch (e) {
-                                    Alert.alert('Server Status', `⚠️ Server reachable but sent non-JSON.\n\nStatus: ${res.status}\nResponse: "${text.substring(0, 100)}"`);
+                                    Alert.alert('Server Status', `⚠️ PARTIAL SUCCESS\n\nStatus: ${res.status}\nServer responded but not with JSON. This means Render is working but the code has an error.\n\nResponse: "${text.substring(0, 100)}"`);
                                 }
                             } catch (e) {
-                                Alert.alert('Server Status', `❌ Cannot reach server.\nError: ${e.message}\n\nURL: ${API_BASE_URL}`);
+                                Alert.alert('Server Status', `❌ FAILED\n\nError: ${e.message}\nURL: ${cleanUrl}\n\nTip: Make sure your phone has internet.`);
                             }
                         }}
                     >
-                        <Text style={{ color: '#718096', fontSize: 12, textDecorationLine: 'underline' }}>Check Server Status</Text>
+                        <Text style={{ color: '#718096', fontSize: 13, textDecorationLine: 'underline', fontWeight: '600' }}>Check Server Status (Final Fix v3)</Text>
                     </TouchableOpacity>
                 </View>
 
