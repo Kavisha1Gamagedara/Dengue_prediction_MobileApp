@@ -37,12 +37,12 @@ export default function OnboardingScreen() {
                     style={styles.gradient}
                 />
                 <Image
-                    source={require('@/assets/Dengue_clean.png')}
+                    source={require('@/assets/loading_image.jpg')}
                     style={styles.backgroundImage}
                     resizeMode="cover"
                 />
                 <Image
-                    source={require('@/assets/logo.png')}
+                    source={require('@/assets/logo3.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />

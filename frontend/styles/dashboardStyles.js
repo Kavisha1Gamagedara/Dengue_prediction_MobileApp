@@ -34,9 +34,15 @@ export const dashboardStyles = StyleSheet.create({
         paddingBottom: 40,
     },
     riskCard: {
-        height: 180,
+        height: 200,
         marginBottom: 32,
-        justifyContent: 'center',
+        borderRadius: 24,
+        overflow: 'hidden',
+    },
+    riskContentWrapper: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        flex: 1,
     },
     gradientBg: {
         position: 'absolute',
@@ -49,7 +55,7 @@ export const dashboardStyles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 12,
     },
     riskInfo: {},
     riskLabel: {
@@ -74,6 +80,34 @@ export const dashboardStyles = StyleSheet.create({
         color: 'rgba(255,255,255,0.9)',
         fontSize: 14,
         lineHeight: 20,
+    },
+    riskBottomBar: {
+        height: 50,
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        justifyContent: 'space-between',
+    },
+    locationContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    locationText: {
+        color: '#FFF',
+        fontSize: 13,
+        fontWeight: '700',
+        marginLeft: 6,
+    },
+    updatedText: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    refreshContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     sectionTitle: {
         fontSize: 18,

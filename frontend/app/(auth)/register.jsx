@@ -7,24 +7,27 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
+    Image
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { API_BASE_URL } from '@/constants/api';
 import { authStyles as styles } from '@/styles/authStyles';
 import { useTranslation } from '@/hooks/LanguageContext';
+import { useTheme } from '@/hooks/ThemeContext';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 
 export default function RegisterScreen() {
-    const colorScheme = useColorScheme() ?? 'light';
+    const { colorScheme, isDark } = useTheme();
     const themeColors = Colors[colorScheme];
     const router = useRouter();
-    const { t } = useTranslation();
+    const { t, lang, changeLanguage } = useTranslation();
 
 
     const [name, setName] = useState('');
@@ -32,6 +35,7 @@ export default function RegisterScreen() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleRegister = async () => {
         if (!name || !email || !password || !confirmPassword) {
@@ -50,40 +54,54 @@ export default function RegisterScreen() {
         }
 
         setLoading(true);
-        console.log(`Attempting registration at: ${API_BASE_URL}/register`);
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
         try {
-            const response = await fetch(`${API_BASE_URL}/register`, {
+            console.log(`Attempting registration to: ${API_BASE_URL}/register`);
+            let response = await fetch(`${API_BASE_URL}/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ name, email, password }),
-                signal: controller.signal
             });
-            clearTimeout(timeoutId);
 
-            const data = await response.json();
+            // Handle potential 404 by trying /api/register
+            if (response.status === 404) {
+                const retryResponse = await fetch(`${API_BASE_URL}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password }),
+                });
+                if (retryResponse.ok || retryResponse.status !== 404) {
+                    response = retryResponse;
+                }
+            }
+
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Registration non-JSON response:', responseText);
+                const preview = responseText.length > 100 ? responseText.substring(0, 100) + '...' : responseText;
+                Alert.alert(
+                    'Server Error',
+                    `The server (Status ${response.status}) returned invalid data.\n\n` +
+                    `Response: "${preview}"`
+                );
+                return;
+            }
 
             if (response.ok) {
                 Alert.alert('Success', 'Account created successfully! Please log in.', [
                     { text: 'OK', onPress: () => router.push('/(auth)/login') }
                 ]);
             } else {
-                console.warn('Registration response not OK:', data);
                 Alert.alert('Registration Failed', data.message || 'Could not register');
             }
         } catch (error) {
-            clearTimeout(timeoutId);
-            if (error.name === 'AbortError') {
-                Alert.alert('Connection Timeout', 'The server took too long to respond. Please check if your backend is running at ' + API_BASE_URL);
-            } else {
-                console.error('Registration error detail:', error);
-                Alert.alert('Error', 'Could not connect to the server. Technical detail: ' + error.message);
-            }
+            console.error('Registration error:', error);
+            Alert.alert('Error', `Could not connect to the server: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -92,86 +110,124 @@ export default function RegisterScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, { backgroundColor: themeColors.background }]}
+            style={[styles.container, { backgroundColor: isDark ? themeColors.background : '#FFFFFF' }]}
         >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={[styles.backButton, { backgroundColor: themeColors.surface }]}
-                    >
-                        <IconSymbol name="chevron.left" size={24} color={themeColors.text} />
-                    </TouchableOpacity>
-                    <Text style={[styles.title, { color: themeColors.text }]}>{t('create_account')}</Text>
-                    <Text style={[styles.subtitle, { color: themeColors.icon }]}>
-                        {t('join_community')}
-                    </Text>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {/* 1. Header with Curved Background */}
+                <View style={[styles.headerBackground, { height: 280 }, isDark && { backgroundColor: themeColors.surface }]}>
+                    <View style={styles.topActionsContainer}>
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.langSelectorNative}
+                        >
+                            <MaterialIcons name="arrow-back" size={24} color={isDark ? themeColors.text : '#1A202C'} />
+                        </TouchableOpacity>
+
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <ThemeToggle style={styles.loginThemeToggle} />
+                            <TouchableOpacity
+                                onPress={() => changeLanguage(lang === 'en' ? 'si' : 'en')}
+                                style={styles.langSelectorNative}
+                            >
+                                <Image source={require('@/assets/SLflag.png')} style={styles.slMiniFlag} />
+                                <Text style={[styles.langText, { color: isDark ? themeColors.text : '#1A202C' }]}>
+                                    {lang === 'en' ? 'සිංහල' : 'English'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <View style={styles.logoContainer}>
+                        <Image
+                            source={isDark ? require('@/assets/logo4.png') : require('@/assets/logo3.png')}
+                            style={[styles.shieldLogo, { width: 70, height: 70 }]}
+                            resizeMode="contain"
+                        />
+                        <Text style={[styles.brandName, { fontSize: 24 }]}>
+                            Dengue<Text style={styles.brandNameRed}>Shield</Text>
+                        </Text>
+                        <Text style={[styles.brandMission, { marginTop: 0 }]}>{t('create_account')}</Text>
+                    </View>
                 </View>
 
-
-                <View style={styles.form}>
+                {/* 2. Form Section */}
+                <View style={styles.formContainer}>
                     <Input
-                        label={t('name')}
-                        placeholder="John Doe"
+                        placeholder={t('name')}
                         value={name}
                         onChangeText={setName}
+                        icon={<MaterialIcons name="person" size={20} color="#718096" style={styles.inputIcon} />}
                     />
+
                     <Input
-                        label={t('email')}
-                        placeholder="example@mail.com"
+                        placeholder={t('email')}
                         autoCapitalize="none"
                         keyboardType="email-address"
                         value={email}
                         onChangeText={setEmail}
+                        icon={<MaterialIcons name="email" size={20} color="#718096" style={styles.inputIcon} />}
                     />
+
                     <Input
-                        label={t('password')}
-                        placeholder="••••••••"
-                        secureTextEntry
+                        placeholder={t('password')}
+                        secureTextEntry={!showPassword}
                         value={password}
                         onChangeText={setPassword}
+                        icon={<MaterialIcons name="lock" size={20} color="#718096" style={styles.inputIcon} />}
+                        rightIcon={
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <MaterialIcons name={showPassword ? "visibility" : "visibility-off"} size={20} color="#718096" />
+                            </TouchableOpacity>
+                        }
                     />
+
                     <Input
-                        label={t('confirm_password')}
-                        placeholder="••••••••"
-                        secureTextEntry
+                        placeholder={t('confirm_password')}
+                        secureTextEntry={!showPassword}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
+                        icon={<MaterialIcons name="lock-outline" size={20} color="#718096" style={styles.inputIcon} />}
                     />
 
-
-                    <View style={styles.termsContainer}>
-                        <Text style={[styles.termsText, { color: themeColors.icon }]}>
-                             {t('terms_agree')}
-                        </Text>
-                    </View>
-
-
-                    <Button
-                        title={loading ? t('creating_account') : t('create_account')}
+                    <TouchableOpacity
+                        style={[styles.loginButton, { marginTop: 10 }]}
                         onPress={handleRegister}
                         disabled={loading}
-                        loading={loading}
-                        style={styles.registerButton}
-                    />
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <>
+                                <MaterialIcons name="person-add" size={22} color="#FFF" />
+                                <Text style={styles.loginButtonText}>{t('signup')}</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
 
-
-                    <View style={styles.footer}>
-                        <Text style={[styles.footerText, { color: themeColors.icon }]}>
-                             {t('already_have_account')}
+                    <View style={styles.footerLinks}>
+                        <Text style={styles.noAccountText}>
+                            {t('already_have_account')}{' '}
+                            <Link href="/(auth)/login" asChild>
+                                <Text style={styles.signUpLink}>{t('login')}</Text>
+                            </Link>
                         </Text>
-                        <Link href="/(auth)/login" asChild>
-                            <TouchableOpacity>
-                                <Text style={[styles.footerLink, { color: themeColors.primary }]}> {t('log_in')}</Text>
-                            </TouchableOpacity>
-                        </Link>
                     </View>
+                </View>
 
+                {/* 3. Footer */}
+                <View style={styles.footer}>
+                    <Image
+                        source={require('@/assets/logo4.png')}
+                        style={styles.slEmblem}
+                        resizeMode="contain"
+                    />
+                    <Text style={styles.footerTextMain}>Dengue Shield</Text>
+                    <Text style={styles.footerTextSub}>Together Against Dengue</Text>
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
     );
 }
-
-// Internal styles removed, now using external authStyles
-

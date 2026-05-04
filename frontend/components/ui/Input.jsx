@@ -13,6 +13,7 @@ export function Input({
     error,
     containerStyle,
     icon,
+    rightIcon,
     ...props
 }) {
     const [isFocused, setIsFocused] = useState(false);
@@ -43,6 +44,7 @@ export function Input({
                     onBlur={() => setIsFocused(false)}
                     {...props}
                 />
+                {rightIcon && <View style={styles.rightIconContainer}>{rightIcon}</View>}
             </View>
             {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
@@ -73,6 +75,9 @@ const styles = StyleSheet.create({
         height: '100%',
         fontSize: 16,
         fontWeight: '500',
+    },
+    rightIconContainer: {
+        marginLeft: 8,
     },
     errorText: {
         color: '#FF4757',

@@ -29,7 +29,7 @@ export default function ProfileScreen() {
     const themeColors = Colors[colorScheme];
     const router = useRouter();
     const { t, lang, changeLanguage } = useTranslation();
-    const { registerForPushNotificationsAsync, scheduleDailyAlert } = useNotifications();
+    const { registerForPushNotificationsAsync, scheduleDailyAlert, stopBackgroundLocationAsync } = useNotifications();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -79,6 +79,7 @@ export default function ProfileScreen() {
                 await registerForPushNotificationsAsync();
             } else {
                 await Notifications.cancelAllScheduledNotificationsAsync();
+                await stopBackgroundLocationAsync();
             }
             
             Alert.alert('Success', 'Notification preferences saved');

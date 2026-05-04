@@ -18,13 +18,31 @@ export const exploreStyles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '800',
     },
+    subtitle: {
+        fontSize: 13,
+        fontWeight: '500',
+        marginTop: 2,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    themeToggle: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+    },
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 12,
-        gap: 8,
+        gap: 6,
     },
     filterText: {
         fontSize: 14,

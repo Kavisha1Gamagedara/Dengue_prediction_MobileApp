@@ -13,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { API_BASE_URL } from '@/constants/api';
 import { useTranslation } from '@/hooks/LanguageContext';
 
@@ -72,8 +73,10 @@ export default function PredictionScreen() {
     };
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: themeColors.background }]}>
-            <View style={styles.header}>
+        <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+            <ThemeToggle style={styles.floatingToggle} />
+            <ScrollView style={[styles.container, { backgroundColor: themeColors.background }]}>
+                <View style={styles.header}>
                 <Text style={[styles.title, { color: themeColors.text }]}>{t('prediction_title')}</Text>
                 <Text style={[styles.subtitle, { color: themeColors.icon }]}>
                     {t('prediction_subtitle')}
@@ -128,6 +131,7 @@ export default function PredictionScreen() {
             )}
 
         </ScrollView>
+    </View>
     );
 }
 
@@ -178,4 +182,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 24,
     },
+    floatingToggle: {
+        position: 'absolute',
+        top: 60,
+        right: 24,
+        zIndex: 100,
+    }
 });

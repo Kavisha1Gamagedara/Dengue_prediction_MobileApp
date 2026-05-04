@@ -8,16 +8,39 @@ import {
 import MapView, { Heatmap, PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { exploreStyles as styles } from '@/styles/exploreStyles';
 import { API_BASE_URL } from '@/constants/api';
 
+const darkMapStyle = [
+    { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
+    { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
+    { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
+    { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+    { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+    { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#263c3f" }] },
+    { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#6b9a76" }] },
+    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#38414e" }] },
+    { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#212a37" }] },
+    { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#9ca5b3" }] },
+    { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#746855" }] },
+    { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#1f2835" }] },
+    { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#f3d19c" }] },
+    { "featureType": "transit", "elementType": "geometry", "stylers": [{ "color": "#2f3948" }] },
+    { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#17263c" }] },
+    { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#515c6d" }] },
+    { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#17263c" }] }
+];
+
 export default function ExploreScreen() {
-    const colorScheme = useColorScheme() ?? 'light';
+    const { colorScheme, toggleTheme, isDark } = useTheme();
     const themeColors = Colors[colorScheme];
     const [location, setLocation] = useState(null);
+
     const [errorMsg, setErrorMsg] = useState(null);
     const [loading, setLoading] = useState(true);
     const [heatmapData, setHeatmapData] = useState([]);
@@ -68,11 +91,17 @@ export default function ExploreScreen() {
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             <View style={styles.header}>
-                <Text style={[styles.title, { color: themeColors.text }]}>Global Risk Map</Text>
-                <TouchableOpacity style={[styles.filterButton, { backgroundColor: themeColors.surface }]}>
-                    <IconSymbol name="chevron.right" size={20} color={themeColors.text} />
-                    <Text style={[styles.filterText, { color: themeColors.text }]}>Filters</Text>
-                </TouchableOpacity>
+                <View>
+                    <Text style={[styles.title, { color: themeColors.text }]}>Global Risk Map</Text>
+                    <Text style={[styles.subtitle, { color: themeColors.icon }]}>Live Dengue Monitoring</Text>
+                </View>
+                <View style={styles.headerActions}>
+                    <ThemeToggle />
+                    <TouchableOpacity style={[styles.filterButton, { backgroundColor: themeColors.surface }]}>
+                        <IconSymbol name="chevron.right" size={20} color={themeColors.text} />
+                        <Text style={[styles.filterText, { color: themeColors.text }]}>Filters</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Google Map View with Heatmap */}
@@ -88,6 +117,7 @@ export default function ExploreScreen() {
                         style={styles.map}
                         initialRegion={initialRegion}
                         showsUserLocation={true}
+                        customMapStyle={isDark ? darkMapStyle : []}
                     >
                         {heatmapData.length > 0 && (
                             <Heatmap

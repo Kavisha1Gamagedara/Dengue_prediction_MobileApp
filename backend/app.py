@@ -13,6 +13,8 @@ import certifi
 import firebase_admin
 from firebase_admin import credentials, messaging
 from statsmodels.tsa.statespace.sarimax import SARIMAXResults
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 app = Flask(__name__)
 # Enable CORS for the frontend (assumed to be running on another port)
@@ -20,11 +22,21 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 bcrypt = Bcrypt(app)
 
 # --- Configuration ---
-env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(env_path)
+local_env = Path(__file__).resolve().parent / ".env"
+parent_env = Path(__file__).resolve().parent.parent / ".env"
+
+if local_env.exists():
+    load_dotenv(local_env)
+    print("Loaded .env from current directory")
+elif parent_env.exists():
+    load_dotenv(parent_env)
+    print("Loaded .env from parent directory")
+else:
+    print("No .env file found. Using environment variables from system.")
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-key-dengue-2024")
+GOOGLE_CLIENT_ID = "734514045592-m9p44jhei0h6i3ra723avjm1sburatkb.apps.googleusercontent.com" # Web Client ID for verification
 
 if not MONGODB_URI:
     raise RuntimeError(
@@ -59,18 +71,18 @@ def get_db_connection():
         db_name = MONGODB_URI.split("/")[-1].split("?")[0] or "Dengue_prediction_db"
         database = client.get_database(db_name)
         
-        print(f"✅ Connected to MongoDB Atlas: {db_name}")
+        print(f"Connected to MongoDB Atlas: {db_name}")
         return client, database
     except Exception as e:
         error_msg = str(e)
         if "TLSV1_ALERT_INTERNAL_ERROR" in error_msg:
-            print("\n❌ CRITICAL: SSL Handshake Failed with 'TLSV1_INTERNAL_ERROR'.")
-            print("👉 This usually indicates your IP is NOT whitelisted in MongoDB Atlas.")
+            print("\nCRITICAL: SSL Handshake Failed with 'TLSV1_INTERNAL_ERROR'.")
+            print("This usually indicates your IP is NOT whitelisted in MongoDB Atlas.")
             print("Action: Go to Atlas -> Network Access -> Add IP Address -> 'Allow Access from Anywhere' (or add your current IP).\n")
         elif "ServerSelectionTimeoutError" in error_msg:
-            print(f"\n❌ CRITICAL: Could not connect to any MongoDB nodes. Timeout: {e}\n")
+            print(f"\nCRITICAL: Could not connect to any MongoDB nodes. Timeout: {e}\n")
         else:
-            print(f"\n❌ MongoDB Connection Error: {e}\n")
+            print(f"\nMongoDB Connection Error: {e}\n")
         raise RuntimeError(f"Database connection failed. Please check your network and Atlas Whitelist.")
 
 # Initialize DB
@@ -84,9 +96,9 @@ try:
         "event": "backend_started",
         "timestamp": datetime.now(timezone.utc)
     })
-    print("🚀 Database primed with startup event")
+    print("Database primed with startup event")
 except Exception as e:
-    print(f"⚠️  Warning: Failed to prime database: {e}")
+    print(f"Warning: Failed to prime database: {e}")
 
 # --- Load Models ---
 try:
@@ -109,9 +121,9 @@ FIREBASE_CRED_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
 if FIREBASE_CRED_PATH and os.path.exists(FIREBASE_CRED_PATH):
     cred = credentials.Certificate(FIREBASE_CRED_PATH)
     firebase_admin.initialize_app(cred)
-    print("🔥 Firebase initialized successfully")
+    print("Firebase initialized successfully")
 else:
-    print("⚠️  Firebase credentials not found. FCM will be disabled.")
+    print("Firebase credentials not found. FCM will be disabled.")
 
 # --- Helpers ---
 def serialize_doc(doc):
@@ -119,17 +131,29 @@ def serialize_doc(doc):
         doc["_id"] = str(doc["_id"])
     return doc
 
-@app.route('/ping', methods=['GET'])
+@app.route('/', methods=['GET', 'HEAD'])
+def index():
+    return jsonify({
+        'status': 'online',
+        'message': 'Dengue Shield Backend is running!',
+        'timestamp': datetime.now(timezone.utc).isoformat()
+    }), 200
+
+@app.route('/ping', methods=['GET', 'HEAD'])
+@app.route('/ping/', methods=['GET', 'HEAD'])
 def ping():
     return jsonify({'message': 'Backend is reachable!'}), 200
 
 # --- Authentication Routes ---
 
 @app.route('/register', methods=['POST'])
+@app.route('/register/', methods=['POST'])
 def register():
-    print(f"Received registration request: {request.remote_addr}")
+    print(f"Received registration request: {request.remote_addr} for {request.path}")
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Missing JSON body'}), 400
         name = data.get('name')
         email = data.get('email')
         password = data.get('password')
@@ -164,10 +188,13 @@ def register():
         return jsonify({'message': 'Internal server error during registration'}), 500
 
 @app.route('/login', methods=['POST'])
+@app.route('/login/', methods=['POST'])
 def login():
-    print(f"Received login request: {request.remote_addr}")
+    print(f"Received login request: {request.remote_addr} for {request.path}")
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Missing JSON body'}), 400
         email = data.get('email')
         password = data.get('password')
 
@@ -194,6 +221,61 @@ def login():
     except Exception as e:
         print(f"Login error: {e}")
         return jsonify({'message': 'Internal server error during login'}), 500
+
+@app.route('/google-login', methods=['POST'])
+def google_login():
+    try:
+        data = request.get_json()
+        token = data.get('id_token')
+
+        if not token:
+            return jsonify({'message': 'ID Token is required'}), 400
+
+        # Verify the token
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+
+            # ID token is valid. Get the user's Google ID from the 'sub' claim.
+            email = idinfo['email']
+            name = idinfo.get('name', 'Google User')
+
+            # Check if user exists, if not create
+            user = users_collection.find_one({'email': email})
+            is_new_user = False
+
+            if not user:
+                user_doc = {
+                    'name': name,
+                    'email': email,
+                    'created_at': datetime.now(timezone.utc),
+                    'is_new_user': True,
+                    'auth_provider': 'google'
+                }
+                result = users_collection.insert_one(user_doc)
+                user = users_collection.find_one({'_id': result.inserted_id})
+                is_new_user = True
+
+            # Create access token
+            access_token = create_access_token(identity=str(user['_id']))
+
+            return jsonify({
+                'message': 'Google login successful',
+                'access_token': access_token,
+                'user': {
+                    'name': user.get('name'),
+                    'email': user.get('email'),
+                    'id': str(user['_id']),
+                    'is_new_user': is_new_user
+                }
+            }), 200
+
+        except ValueError:
+            # Invalid token
+            return jsonify({'message': 'Invalid Google ID token'}), 401
+
+    except Exception as e:
+        print(f"Google login error: {e}")
+        return jsonify({'message': 'Internal server error during Google login'}), 500
 
 # --- Profile Routes ---
 
@@ -259,18 +341,25 @@ def predict_risk():
             if field not in data:
                 return jsonify({'status': 'error', 'message': f'Missing field: {field}'}), 400
 
-        # The model requires Rainfall_Lag_1. We use Precipitation_avg as a proxy.
-        input_data = {
+        # Create the exogenous DataFrame with features in the same order as training
+        input_df = pd.DataFrame([{
             'Temp_avg': data.get('Temp_avg'),
             'Precipitation_avg': data.get('Precipitation_avg'),
             'Humidity_avg': data.get('Humidity_avg'),
-            'Rainfall_Lag_1': data.get('Precipitation_avg')
-        }
+            'Rainfall_Lag_1': data.get('Rainfall_Lag_1', data.get('Precipitation_avg'))
+        }])
         
-        input_df = pd.DataFrame([input_data])
-        
-        prediction = model.predict(input_df)
-        predicted_cases = round(float(prediction[0]), 2)
+        # Statsmodels SARIMAX forecast for the next step using the provided weather data
+        if hasattr(model, 'get_forecast'):
+            forecast = model.get_forecast(steps=1, exog=input_df)
+            predicted_cases = max(0.0, round(float(forecast.predicted_mean.iloc[0]), 2))
+        elif hasattr(model, 'predict'):
+            # Fallback for standard scikit-learn model
+            pred = model.predict(input_df)
+            predicted_cases = max(0.0, round(float(pred[0]), 2))
+        else:
+            return jsonify({'status': 'error', 'message': 'Model format unknown'}), 500
+
         risk_level = 'High' if predicted_cases > 100 else 'Low'
 
         log_entry = {
@@ -330,9 +419,11 @@ def predict_sarimax():
 @app.route('/heatmap', methods=['GET'])
 def get_heatmap_data():
     try:
-        # In a real app, you'd aggregate recent logs or use a separate collection
-        # Here we mock it from the CSV for demonstration
-        df = pd.read_csv('../dengue_data_with_weather_data.csv')
+        csv_path = 'dengue_data_with_weather_data.csv'
+        if not os.path.exists(csv_path):
+            csv_path = '../dengue_data_with_weather_data.csv'
+
+        df = pd.read_csv(csv_path)
         # Get the latest month data
         latest_data = df[df['Year'] == df['Year'].max()]
         latest_data = latest_data[latest_data['Month'] == latest_data['Month'].max()]
@@ -355,6 +446,54 @@ def get_heatmap_data():
             })
             
         return jsonify(heatmap_points), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    try:
+        csv_path = 'dengue_data_with_weather_data.csv'
+        if not os.path.exists(csv_path):
+            csv_path = '../dengue_data_with_weather_data.csv'
+
+        df = pd.read_csv(csv_path)
+        # Get the latest month data
+        latest_year = df['Year'].max()
+        latest_month_data = df[df['Year'] == latest_year]
+        latest_month = latest_month_data['Month'].max()
+        latest_data = latest_month_data[latest_month_data['Month'] == latest_month]
+        
+        total_cases = int(latest_data['Cases'].sum())
+        # Mocking active cases as a fraction of total cases for the month
+        # In a real scenario, this would come from a database of current cases
+        active_cases = int(total_cases * 0.15) 
+        recovered_cases = total_cases - active_cases
+        
+        # Risk area is the district with maximum cases
+        risk_area_row = latest_data.loc[latest_data['Cases'].idxmax()]
+        risk_area = risk_area_row['District']
+        
+        # Determine overall risk level
+        if active_cases > 1000:
+            risk_level = "High"
+            risk_desc = "Significant increase in cases detected. Please take immediate precautions."
+        elif active_cases > 300:
+            risk_level = "Moderate"
+            risk_desc = "Cases are present in your area. Maintain standard prevention measures."
+        else:
+            risk_level = "Low"
+            risk_desc = "Case counts are currently low. Stay vigilant and keep environment clean."
+
+        return jsonify({
+            'total_cases': total_cases,
+            'active_cases': active_cases,
+            'recovered': recovered_cases,
+            'risk_area': risk_area,
+            'risk_level': risk_level,
+            'risk_desc': risk_desc,
+            'year': int(latest_year),
+            'month': int(latest_month)
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -395,5 +534,7 @@ def get_history():
         return jsonify({'message': str(e)}), 500
 
 if __name__ == '__main__':
-    # Using a different port if needed, but 5000 is default
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    # Render provides the port in the PORT environment variable
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Backend starting on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
