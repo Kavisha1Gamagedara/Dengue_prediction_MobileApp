@@ -108,7 +108,7 @@ export default function LoginScreen() {
             // If 404, maybe it needs a trailing slash or /api prefix
             if (response.status === 404) {
                 console.log('404 detected, trying /api/login...');
-                const retryResponse = await fetch(`${API_BASE_URL}/api/login`, {
+                const retryResponse = await fetch(`${cleanBaseUrl}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
@@ -271,7 +271,7 @@ export default function LoginScreen() {
                         style={{ marginTop: 20, alignItems: 'center', padding: 10 }}
                         onPress={async () => {
                             // THE ABSOLUTE TRUTH - NO MORE HIDDEN CHARACTERS
-                            const cleanUrl = 'https://dengue-backend-1994.onrender.com';
+                            const cleanUrl = API_BASE_URL;
 
                             try {
                                 const res = await fetch(`${cleanUrl}/ping`, {

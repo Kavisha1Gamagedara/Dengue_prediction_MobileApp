@@ -56,8 +56,9 @@ export default function RegisterScreen() {
         setLoading(true);
 
         try {
-            console.log(`Attempting registration to: ${API_BASE_URL}/register`);
-            let response = await fetch(`${API_BASE_URL}/register`, {
+            const cleanBaseUrl = API_BASE_URL;
+            console.log(`Attempting registration to: ${cleanBaseUrl}/register`);
+            let response = await fetch(`${cleanBaseUrl}/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -67,7 +68,7 @@ export default function RegisterScreen() {
 
             // Handle potential 404 by trying /api/register
             if (response.status === 404) {
-                const retryResponse = await fetch(`${API_BASE_URL}/api/register`, {
+                const retryResponse = await fetch(`${cleanBaseUrl}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password }),

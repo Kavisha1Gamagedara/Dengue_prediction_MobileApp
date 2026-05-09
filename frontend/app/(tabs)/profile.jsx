@@ -253,6 +253,17 @@ export default function ProfileScreen() {
 
                     <Text style={[styles.sectionTitleSmall, { color: themeColors.text, marginTop: 16 }]}>Settings</Text>
 
+                    <TouchableOpacity 
+                        style={styles.actionRow}
+                        onPress={() => router.push('/my_reports')}
+                    >
+                        <View style={[styles.actionIcon, { backgroundColor: '#E3F2FD' }]}>
+                            <IconSymbol name="doc.text.fill" size={20} color={themeColors.primary} />
+                        </View>
+                        <Text style={[styles.actionText, { color: themeColors.text }]}>My Reported Cases</Text>
+                        <IconSymbol name="chevron.right" size={20} color={themeColors.icon} />
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.actionRow}>
                         <View style={[styles.actionIcon, { backgroundColor: '#E8F5E9' }]}>
                             <IconSymbol name="shield.fill" size={20} color="#2ECC71" />

@@ -117,7 +117,7 @@ export default function ExploreScreen() {
                         style={styles.map}
                         initialRegion={initialRegion}
                         showsUserLocation={true}
-                        customMapStyle={isDark ? darkMapStyle : []}
+                        mapType="standard"
                     >
                         {heatmapData.length > 0 && (
                             <Heatmap

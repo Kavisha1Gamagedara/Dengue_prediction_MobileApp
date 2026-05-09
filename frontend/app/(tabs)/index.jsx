@@ -236,7 +236,7 @@ export default function DashboardScreen() {
                             title={t('report_case')}
                             color={colorScheme === 'light' ? '#000000' : '#FFFFFF'}
                             themeColors={themeColors}
-                            onPress={() => {}}
+                            onPress={() => router.push('/report')}
                         />
                         <ActionItem
                             icon="chart.bar.fill"
