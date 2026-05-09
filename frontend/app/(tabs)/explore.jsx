@@ -132,8 +132,8 @@ export default function ExploreScreen() {
                             />
                         )}
                         {heatmapData.map((zone, index) => {
-                            // Only show markers for high risk areas to avoid clutter
-                            if (zone.weight < 5) return null; 
+                            // Show markers for areas with cases
+                            if (zone.weight < 2) return null; 
                             
                             return (
                                 <Marker

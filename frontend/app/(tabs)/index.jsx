@@ -59,25 +59,28 @@ export default function DashboardScreen() {
             }
         };
 
-        const fetchStats = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/stats`);
-                const data = await response.json();
-                if (response.ok) {
-                    setStats(data);
-                    updateTimestamp();
-                }
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-            } finally {
-                setStatsLoading(false);
-            }
-        };
-
         loadUserData();
-        fetchStats();
         setupLocationTracking();
+        // Initial global stats fetch while waiting for location
+        fetchStats();
     }, []);
+
+    const fetchStats = async (districtName = null) => {
+        setStatsLoading(true);
+        try {
+            const url = districtName ? `${API_BASE_URL}/stats?district=${encodeURIComponent(districtName)}` : `${API_BASE_URL}/stats`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (response.ok) {
+                setStats(data);
+                updateTimestamp();
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
 
     const updateTimestamp = () => {
         const now = new Date();
@@ -117,6 +120,7 @@ export default function DashboardScreen() {
             if (geocode.length > 0) {
                 const district = geocode[0].subregion || geocode[0].district || geocode[0].city || 'Sri Lanka';
                 setCurrentDistrict(district);
+                fetchStats(district);
             }
         } catch (error) {
             console.error('Geocoding error:', error);
@@ -124,20 +128,16 @@ export default function DashboardScreen() {
     };
 
     const handleRefresh = async () => {
-        setStatsLoading(true);
+        if (currentDistrict && currentDistrict !== 'Locating...' && currentDistrict !== 'Permission Denied') {
+            fetchStats(currentDistrict);
+        } else {
+            fetchStats();
+        }
         try {
-            const response = await fetch(`${API_BASE_URL}/stats`);
-            const data = await response.json();
-            if (response.ok) {
-                setStats(data);
-                updateTimestamp();
-            }
             let location = await Location.getCurrentPositionAsync({});
             updateDistrictName(location.coords.latitude, location.coords.longitude);
         } catch (error) {
-            console.error('Refresh error:', error);
-        } finally {
-            setStatsLoading(false);
+            console.error('Refresh location error:', error);
         }
     };
 
@@ -190,7 +190,7 @@ export default function DashboardScreen() {
                 {/* Risk Level Card */}
                 <Card style={[styles.riskCard, { padding: 0 }]}>
                     <LinearGradient
-                        colors={stats?.risk_level === 'High' ? ['#7E1C25', '#C0392B'] : stats?.risk_level === 'Moderate' ? ['#F39C12', '#E67E22'] : ['#27AE60', '#2ECC71']}
+                        colors={stats?.risk_level === 'High' ? ['#7E1C25', '#C0392B'] : stats?.risk_level === 'Moderate' ? ['#2980B9', '#3498DB'] : ['#27AE60', '#2ECC71']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.gradientBg}
